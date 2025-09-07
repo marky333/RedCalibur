@@ -20,12 +20,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 from transformers import (
-    AutoTokenizer, AutoModel, AutoModelForSequenceClassification,
-    pipeline, GPT2LMHeadModel, GPT2Tokenizer
+    AutoTokenizer,
+    AutoModelForCausalLM
 )
 from sklearn.base import BaseEstimator, ClassifierMixin
-import openai
-from anthropic import Anthropic
+from gemini_sdk import Gemini
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -119,7 +118,7 @@ class TransformerClassifier(BaseAIModel):
         """Load pre-trained transformer model."""
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
-            self.model = AutoModelForSequenceClassification.from_pretrained(self.config.model_name)
+            self.model = AutoModelForCausalLM.from_pretrained(self.config.model_name)
             self.model.to(self.device)
             logger.info(f"Loaded transformer model: {self.config.model_name}")
         except Exception as e:
@@ -196,42 +195,29 @@ class LLMIntegration:
     Large Language Model Integration for RedCalibur
     
     Supports multiple LLM providers:
-    - OpenAI (GPT-3.5, GPT-4)
-    - Anthropic (Claude)
+    - Gemini
     - Local models via transformers
     """
     
-    def __init__(self, provider: str = 'openai', api_key: Optional[str] = None):
+    def __init__(self, provider: str = 'gemini', api_key: Optional[str] = None):
         self.provider = provider
         self.api_key = api_key or os.getenv(f'{provider.upper()}_API_KEY')
         
-        if provider == 'openai':
-            openai.api_key = self.api_key
-        elif provider == 'anthropic':
-            self.client = Anthropic(api_key=self.api_key)
+        if provider == 'gemini':
+            self.client = Gemini(api_key=self.api_key)
         
         logger.info(f"Initialized LLM integration with provider: {provider}")
     
     async def generate_response(self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7) -> str:
         """Generate response using LLM."""
         try:
-            if self.provider == 'openai':
-                response = await openai.ChatCompletion.acreate(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
+            if self.provider == 'gemini':
+                response = await self.client.generate(
+                    prompt=prompt,
                     max_tokens=max_tokens,
                     temperature=temperature
                 )
-                return response.choices[0].message.content
-            
-            elif self.provider == 'anthropic':
-                response = await self.client.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                return response.content[0].text
+                return response.text
                 
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
