@@ -24,7 +24,7 @@ Version: 1.0.0
 
 __version__ = "1.0.0"
 __author__ = "PraneeshRV"
-__email__ = "praneesh@example.com"
+__email__ = "praneeshrv404@gmail.com"
 __license__ = "MIT"
 
 # Core imports for easy access
@@ -32,15 +32,14 @@ from .config import Config, setup_logging
 
 # AI Core components
 from .ai_core import (
-    NeuralNetwork,
-    EnsembleModel,
+    RedTeamNeuralNet,
+    EnsembleAISystem,
     TransformerClassifier,
-    FeatureExtractor,
-    ModelTrainer,
-    AIModelManager,
-    GPTAnalyzer,
-    AnthropicAnalyzer,
-    ModelConfig
+    LLMIntegration,
+    AIModelConfig,
+    create_phishing_detector,
+    create_neural_classifier,
+    create_llm_integration
 )
 
 # Phishing Detection

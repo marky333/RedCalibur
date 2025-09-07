@@ -12,8 +12,10 @@ def perform_whois_lookup(domain):
         dict: A dictionary containing WHOIS information.
     """
     try:
-        whois_data = whois.whois(domain)
-        return whois_data
+        whois_info = whois.whois(domain)
+        if isinstance(whois_info, dict):
+            return whois_info
+        return whois_info.__dict__
     except Exception as e:
         return {"error": str(e)}
 

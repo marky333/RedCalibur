@@ -24,7 +24,7 @@ from transformers import (
     AutoModelForCausalLM
 )
 from sklearn.base import BaseEstimator, ClassifierMixin
-from gemini_sdk import Gemini
+import google.generativeai as genai
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -204,7 +204,8 @@ class LLMIntegration:
         self.api_key = api_key or os.getenv(f'{provider.upper()}_API_KEY')
         
         if provider == 'gemini':
-            self.client = Gemini(api_key=self.api_key)
+            genai.configure(api_key=self.api_key)
+            self.client = genai.GenerativeModel('gemini-pro')
         
         logger.info(f"Initialized LLM integration with provider: {provider}")
     
@@ -212,10 +213,12 @@ class LLMIntegration:
         """Generate response using LLM."""
         try:
             if self.provider == 'gemini':
-                response = await self.client.generate(
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature
+                response = await self.client.generate_content_async(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        max_output_tokens=max_tokens,
+                        temperature=temperature
+                    )
                 )
                 return response.text
                 
@@ -322,6 +325,6 @@ def create_neural_classifier(input_size: int, num_classes: int) -> RedTeamNeural
     )
 
 
-def create_llm_integration(provider: str = 'openai') -> LLMIntegration:
+def create_llm_integration(provider: str = 'gemini') -> LLMIntegration:
     """Create LLM integration."""
     return LLMIntegration(provider=provider)
