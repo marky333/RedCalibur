@@ -1,0 +1,246 @@
+import argparse
+import sys
+import json
+from datetime import datetime
+from .config import Config, setup_logging
+from .osint.domain_infrastructure.whois_lookup import perform_whois_lookup
+from .osint.domain_infrastructure.dns_enumeration import enumerate_dns_records
+from .osint.domain_infrastructure.subdomain_discovery import discover_subdomains
+from .osint.domain_infrastructure.port_scanning import perform_port_scan
+from .osint.domain_infrastructure.ssl_tls_details import get_ssl_details
+from .osint.network_threat_intel.shodan_integration import perform_shodan_scan
+from .osint.user_identity.username_lookup import lookup_username
+from .osint.ai_enhanced.recon_summarizer import summarize_recon_data
+from .osint.ai_enhanced.risk_scoring import calculate_risk_score
+from .osint.ai_enhanced.report_generator import generate_pdf_report
+
+class RedCaliburCLI:
+    """Professional CLI interface for RedCalibur"""
+    
+    def __init__(self):
+        self.logger = setup_logging()
+        self.config = Config()
+        
+    def parse_arguments(self):
+        """Parse command line arguments"""
+        parser = argparse.ArgumentParser(
+            description="RedCalibur - AI-Powered Red Teaming Toolkit",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog="""
+Examples:
+  redcalibur domain --target example.com --all
+  redcalibur scan --target 192.168.1.1 --ports 80,443,22
+  redcalibur username --target johndoe --platforms twitter,linkedin
+  redcalibur report --input data.json --format pdf
+            """
+        )
+        
+        subparsers = parser.add_subparsers(dest='command', help='Available commands')
+        
+        # Domain reconnaissance
+        domain_parser = subparsers.add_parser('domain', help='Domain reconnaissance')
+        domain_parser.add_argument('--target', required=True, help='Target domain')
+        domain_parser.add_argument('--whois', action='store_true', help='Perform WHOIS lookup')
+        domain_parser.add_argument('--dns', action='store_true', help='Enumerate DNS records')
+        domain_parser.add_argument('--subdomains', action='store_true', help='Discover subdomains')
+        domain_parser.add_argument('--ssl', action='store_true', help='Get SSL/TLS details')
+        domain_parser.add_argument('--all', action='store_true', help='Run all domain checks')
+        
+        # Network scanning
+        scan_parser = subparsers.add_parser('scan', help='Network scanning')
+        scan_parser.add_argument('--target', required=True, help='Target IP or domain')
+        scan_parser.add_argument('--ports', help='Comma-separated list of ports (default: common ports)')
+        scan_parser.add_argument('--shodan', action='store_true', help='Use Shodan scan')
+        
+        # Username lookup
+        username_parser = subparsers.add_parser('username', help='Username reconnaissance')
+        username_parser.add_argument('--target', required=True, help='Target username')
+        username_parser.add_argument('--platforms', help='Comma-separated platforms to check')
+        
+        # Report generation
+        report_parser = subparsers.add_parser('report', help='Generate reports')
+        report_parser.add_argument('--input', required=True, help='Input JSON file with results')
+        report_parser.add_argument('--format', choices=['pdf', 'json', 'both'], default='both')
+        report_parser.add_argument('--output', help='Output filename (without extension)')
+        
+        # Configuration
+        config_parser = subparsers.add_parser('config', help='Configuration management')
+        config_parser.add_argument('--check', action='store_true', help='Check configuration')
+        config_parser.add_argument('--show', action='store_true', help='Show current configuration')
+        
+        return parser.parse_args()
+    
+    def run_domain_recon(self, args):
+        """Run domain reconnaissance"""
+        results = {"target": args.target, "timestamp": datetime.now().isoformat()}
+        
+        try:
+            if args.whois or args.all:
+                self.logger.info(f"Performing WHOIS lookup for {args.target}")
+                results["whois"] = perform_whois_lookup(args.target)
+                
+            if args.dns or args.all:
+                self.logger.info(f"Enumerating DNS records for {args.target}")
+                results["dns"] = enumerate_dns_records(args.target)
+                
+            if args.subdomains or args.all:
+                self.logger.info(f"Discovering subdomains for {args.target}")
+                results["subdomains"] = discover_subdomains(args.target, self.config.SUBDOMAIN_WORDLIST)
+                
+            if args.ssl or args.all:
+                self.logger.info(f"Getting SSL/TLS details for {args.target}")
+                results["ssl"] = get_ssl_details(args.target)
+                
+            # AI Enhancement: Summarize results
+            if args.all:
+                raw_data = json.dumps(results, indent=2)
+                summary = summarize_recon_data(raw_data[:1000])  # Truncate for summarization
+                results["ai_summary"] = summary
+                
+                # Calculate risk score
+                features = [
+                    len(results.get("subdomains", [])),
+                    1 if "error" not in results.get("ssl", {}) else 0,
+                    len(results.get("dns", {}).get("A", []))
+                ]
+                risk_score = calculate_risk_score(features)
+                results["risk_score"] = risk_score
+                
+        except Exception as e:
+            self.logger.error(f"Error in domain reconnaissance: {str(e)}")
+            results["error"] = str(e)
+            
+        return results
+    
+    def run_network_scan(self, args):
+        """Run network scanning"""
+        results = {"target": args.target, "timestamp": datetime.now().isoformat()}
+        
+        try:
+            if args.ports:
+                ports = [int(p.strip()) for p in args.ports.split(',')]
+            else:
+                ports = self.config.DEFAULT_PORTS
+                
+            self.logger.info(f"Scanning ports {ports} on {args.target}")
+            results["port_scan"] = perform_port_scan(args.target, ports)
+            
+            if args.shodan and self.config.SHODAN_API_KEY:
+                self.logger.info(f"Performing Shodan scan on {args.target}")
+                results["shodan"] = perform_shodan_scan(self.config.SHODAN_API_KEY, args.target)
+            elif args.shodan:
+                self.logger.warning("Shodan API key not configured")
+                
+        except Exception as e:
+            self.logger.error(f"Error in network scanning: {str(e)}")
+            results["error"] = str(e)
+            
+        return results
+    
+    def run_username_lookup(self, args):
+        """Run username reconnaissance"""
+        results = {"target": args.target, "timestamp": datetime.now().isoformat()}
+        
+        try:
+            if args.platforms:
+                platforms = [p.strip() for p in args.platforms.split(',')]
+            else:
+                platforms = ["twitter", "linkedin", "github", "instagram"]
+                
+            self.logger.info(f"Looking up username {args.target} on platforms: {platforms}")
+            results["username_lookup"] = lookup_username(args.target, platforms)
+            
+        except Exception as e:
+            self.logger.error(f"Error in username lookup: {str(e)}")
+            results["error"] = str(e)
+            
+        return results
+    
+    def generate_report(self, args):
+        """Generate reports from results"""
+        try:
+            with open(args.input, 'r') as f:
+                data = json.load(f)
+                
+            output_name = args.output or f"redcalibur_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            if args.format in ['pdf', 'both']:
+                pdf_path = f"{self.config.OUTPUT_DIR}/{output_name}.pdf"
+                generate_pdf_report(data, pdf_path)
+                self.logger.info(f"PDF report generated: {pdf_path}")
+                
+            if args.format in ['json', 'both']:
+                json_path = f"{self.config.OUTPUT_DIR}/{output_name}.json"
+                with open(json_path, 'w') as f:
+                    json.dump(data, f, indent=2, default=str)
+                self.logger.info(f"JSON report generated: {json_path}")
+                
+        except Exception as e:
+            self.logger.error(f"Error generating report: {str(e)}")
+            
+    def check_config(self):
+        """Check configuration"""
+        issues = self.config.validate_config()
+        
+        if issues:
+            self.logger.warning("Configuration issues found:")
+            for issue in issues:
+                self.logger.warning(f"  - {issue}")
+        else:
+            self.logger.info("Configuration is valid")
+            
+    def show_config(self):
+        """Show current configuration"""
+        config_info = {
+            "SHODAN_API_KEY": "Set" if self.config.SHODAN_API_KEY else "Not set",
+            "OPENAI_API_KEY": "Set" if self.config.OPENAI_API_KEY else "Not set",
+            "OUTPUT_DIR": self.config.OUTPUT_DIR,
+            "REPORT_FORMAT": self.config.REPORT_FORMAT,
+            "DEFAULT_PORTS": self.config.DEFAULT_PORTS
+        }
+        
+        print(json.dumps(config_info, indent=2))
+    
+    def run(self):
+        """Main CLI entry point"""
+        args = self.parse_arguments()
+        
+        if not args.command:
+            print("No command specified. Use --help for usage information.")
+            sys.exit(1)
+            
+        if args.command == 'config':
+            if args.check:
+                self.check_config()
+            elif args.show:
+                self.show_config()
+            return
+            
+        results = None
+        
+        if args.command == 'domain':
+            results = self.run_domain_recon(args)
+        elif args.command == 'scan':
+            results = self.run_network_scan(args)
+        elif args.command == 'username':
+            results = self.run_username_lookup(args)
+        elif args.command == 'report':
+            self.generate_report(args)
+            return
+            
+        if results:
+            # Save results to file
+            output_file = f"{self.config.OUTPUT_DIR}/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=2, default=str)
+                
+            print(json.dumps(results, indent=2, default=str))
+            self.logger.info(f"Results saved to {output_file}")
+
+def main():
+    """Entry point for the CLI"""
+    cli = RedCaliburCLI()
+    cli.run()
+
+if __name__ == "__main__":
+    main()

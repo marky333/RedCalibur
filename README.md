@@ -220,51 +220,221 @@ The toolkit is now ready for demonstration, testing, and further development for
 
 ---
 
-# RedCalibur
+# RedCalibur 🗡️
 
-RedCalibur is an AI-powered red teaming toolkit designed to automate various penetration testing phases, starting with OSINT (Open Source Intelligence).
+**RedCalibur** is a professional AI-powered red teaming toolkit designed to automate various phases of penetration testing, with a primary focus on OSINT (Open Source Intelligence) reconnaissance.
 
-## Features
+## 🚀 Features
 
-- **WHOIS Lookup**: Perform WHOIS lookups for domain names.
-- **Shodan Scan**: Scan IPs or domains using the Shodan API.
-- **Social Media Scraper**: Scrape social media profiles for basic information.
-- **Phishing Detection**: Detect phishing URLs using AI models.
+### 🌐 Domain & Infrastructure Analysis
+- **WHOIS Lookup**: Comprehensive domain registration information
+- **DNS Enumeration**: Complete DNS record discovery (A, AAAA, MX, TXT, CNAME, NS)
+- **Subdomain Discovery**: Automated subdomain enumeration with multiple techniques
+- **Port Scanning**: Intelligent port scanning with service detection
+- **SSL/TLS Analysis**: Certificate details, expiration, and security assessment
+- **Tech Stack Identification**: Web technology fingerprinting
+- **CDN & Hosting Detection**: Infrastructure provider identification
 
-## Installation
+### 🔍 Search Engine & Data Mining
+- **Google Dorking**: Automated advanced search queries
+- **Leak Detection**: Pastebin and GitHub data leak discovery
+- **Dark Web Monitoring**: Surface and deep web mention tracking
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/PraneeshRV/RedCalibur.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd RedCalibur
-   ```
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 👤 User & Identity Intelligence
+- **Username Enumeration**: Cross-platform username discovery
+- **Email Harvesting**: Professional email address collection
+- **Breach Analysis**: Data breach lookup and correlation
+- **Phone Number Intelligence**: Carrier and geolocation analysis
 
-## Usage
+### 📱 Social Media Reconnaissance
+- **LinkedIn Intelligence**: Company structure and employee mapping
+- **Twitter/X Analysis**: User behavior and network analysis
+- **Multi-Platform Profiling**: Facebook, Instagram, and more
 
-1. Run the OSINT module:
-   ```bash
-   python -m redcalibur.osint
-   ```
-2. Use the phishing detection module:
-   ```bash
-   python demo.py
-   ```
+### 🖼️ File & Media Analysis
+- **EXIF Metadata**: GPS coordinates, camera info, timestamps
+- **Reverse Image Search**: Multi-engine image source tracking
+- **Document Analysis**: Hidden metadata extraction from PDFs/Office files
 
-## Contributing
+### 🌐 Network & Threat Intelligence
+- **Shodan Integration**: IoT device and service discovery
+- **ASN Lookup**: Network ownership and routing information
+- **Passive DNS**: Historical DNS record analysis
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+### 🧠 AI-Enhanced Capabilities
+- **Intelligent Summarization**: AI-powered reconnaissance report generation
+- **Risk Scoring**: Automated vulnerability assessment
+- **Correlation Engine**: Cross-reference data points for insights
+- **Professional Reporting**: PDF and JSON report generation
 
-## License
+## 📦 Installation
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+### Quick Install
+```bash
+git clone https://github.com/PraneeshRV/RedCalibur.git
+cd RedCalibur
+pip install -e .
+```
 
-## Disclaimer
+### Production Install
+```bash
+pip install redcalibur
+```
 
-This toolkit is for educational and ethical purposes only. Unauthorized use of this toolkit is strictly prohibited.
+### Environment Setup
+```bash
+# Create virtual environment (recommended)
+python -m venv redcalibur-env
+source redcalibur-env/bin/activate  # Linux/Mac
+# redcalibur-env\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+```bash
+# Required for full functionality
+export SHODAN_API_KEY="your_shodan_api_key"
+export OPENAI_API_KEY="your_openai_api_key"
+export ANTHROPIC_API_KEY="your_anthropic_api_key"
+
+# Optional
+export REDCALIBUR_OUTPUT_DIR="./reports"
+export REDCALIBUR_LOG_LEVEL="INFO"
+```
+
+### Configuration Check
+```bash
+redcalibur config --check
+redcalibur config --show
+```
+
+## 🎯 Usage
+
+### Command Line Interface
+
+#### Domain Reconnaissance
+```bash
+# Complete domain analysis
+redcalibur domain --target example.com --all
+
+# Specific checks
+redcalibur domain --target example.com --whois --dns --ssl
+redcalibur domain --target example.com --subdomains
+```
+
+#### Network Scanning
+```bash
+# Port scanning
+redcalibur scan --target 192.168.1.1 --ports 80,443,22,21
+
+# Shodan integration
+redcalibur scan --target example.com --shodan
+```
+
+#### Username Intelligence
+```bash
+# Multi-platform username lookup
+redcalibur username --target johndoe --platforms twitter,linkedin,github
+
+# All supported platforms
+redcalibur username --target johndoe
+```
+
+#### Report Generation
+```bash
+# Generate comprehensive reports
+redcalibur report --input results.json --format pdf
+redcalibur report --input results.json --format both --output custom_name
+```
+
+### Python API
+
+```python
+from redcalibur.osint.domain_infrastructure import perform_whois_lookup
+from redcalibur.osint.ai_enhanced import summarize_recon_data
+
+# Domain analysis
+whois_data = perform_whois_lookup("example.com")
+
+# AI summarization
+summary = summarize_recon_data(str(whois_data))
+print(summary)
+```
+
+## 📊 Sample Output
+
+```json
+{
+  "target": "example.com",
+  "timestamp": "2025-09-08T01:48:00",
+  "whois": {
+    "registrar": "Example Registrar",
+    "creation_date": "2000-01-01",
+    "expiration_date": "2026-01-01"
+  },
+  "dns": {
+    "A": ["93.184.216.34"],
+    "MX": ["mail.example.com"]
+  },
+  "ssl": {
+    "issuer": "DigiCert Inc",
+    "notAfter": "2025-12-31",
+    "subjectAltName": ["example.com", "www.example.com"]
+  },
+  "ai_summary": "Target shows standard configuration with valid SSL certificate expiring in 2025...",
+  "risk_score": 0.3
+}
+```
+
+## 🛡️ Security & Ethics
+
+### Responsible Use
+- **Educational Purpose**: Designed for security professionals and researchers
+- **Legal Compliance**: Ensure you have proper authorization before testing
+- **Ethical Guidelines**: Follow responsible disclosure practices
+- **Rate Limiting**: Built-in delays to respect target systems
+
+### Disclaimer
+⚠️ **IMPORTANT**: This toolkit is for educational and authorized testing purposes only. Unauthorized use against systems you do not own or have explicit permission to test is illegal and unethical.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+```bash
+git clone https://github.com/PraneeshRV/RedCalibur.git
+cd RedCalibur
+python -m venv dev-env
+source dev-env/bin/activate
+pip install -e ".[dev]"
+```
+
+### Running Tests
+```bash
+python -m pytest tests/
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- **Documentation**: [Wiki](https://github.com/PraneeshRV/RedCalibur/wiki)
+- **Issues**: [Bug Reports](https://github.com/PraneeshRV/RedCalibur/issues)
+- **Discussions**: [Community](https://github.com/PraneeshRV/RedCalibur/discussions)
+
+## 🙏 Acknowledgments
+
+- Inspired by the cybersecurity community
+- Built with modern AI/ML technologies
+- Designed for the next generation of security professionals
+
+---
+
+**RedCalibur** - *Forging the future of automated red teaming* ⚔️
