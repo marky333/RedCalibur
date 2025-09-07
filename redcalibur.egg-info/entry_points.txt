@@ -1,0 +1,2 @@
+[console_scripts]
+redcalibur-osint = redcalibur.osint.__main__:main

@@ -1,0 +1,7 @@
+shodan
+bs4
+requests
+whois
+torch
+scikit-learn
+transformers

@@ -1,3 +1,32 @@
+Metadata-Version: 2.4
+Name: redcalibur
+Version: 1.0.0
+Summary: AI-powered red teaming toolkit for penetration testing
+Home-page: https://github.com/PraneeshRV/RedCalibur
+Author: PraneeshRV
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: shodan
+Requires-Dist: bs4
+Requires-Dist: requests
+Requires-Dist: whois
+Requires-Dist: torch
+Requires-Dist: scikit-learn
+Requires-Dist: transformers
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # 🗡️ RedCalibur - AI-Powered Red Teaming Toolkit
 
 > "Forged at the intersection of artificial intelligence and offensive cybersecurity."
@@ -33,11 +62,6 @@ This toolkit combines traditional red team techniques with modern AI enhancement
 - **TransformerClassifier**: Text analysis with fallback heuristics
 - **EnsembleAISystem**: Multi-model prediction combination
 - **LLM Integration**: Support for OpenAI/Anthropic APIs
-
-### OSINT & Reconnaissance
-- **WHOIS Lookup**: Perform WHOIS lookups for domain names.
-- **Shodan Scan**: Scan IPs or domains using the Shodan API.
-- **Social Media Scraper**: Scrape social media profiles for basic information.
 
 ---
 
@@ -219,52 +243,3 @@ The toolkit is now ready for demonstration, testing, and further development for
 - **Production Ready**: Can be extended for real-world use
 
 ---
-
-# RedCalibur
-
-RedCalibur is an AI-powered red teaming toolkit designed to automate various penetration testing phases, starting with OSINT (Open Source Intelligence).
-
-## Features
-
-- **WHOIS Lookup**: Perform WHOIS lookups for domain names.
-- **Shodan Scan**: Scan IPs or domains using the Shodan API.
-- **Social Media Scraper**: Scrape social media profiles for basic information.
-- **Phishing Detection**: Detect phishing URLs using AI models.
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/PraneeshRV/RedCalibur.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd RedCalibur
-   ```
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-1. Run the OSINT module:
-   ```bash
-   python -m redcalibur.osint
-   ```
-2. Use the phishing detection module:
-   ```bash
-   python demo.py
-   ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-## Disclaimer
-
-This toolkit is for educational and ethical purposes only. Unauthorized use of this toolkit is strictly prohibited.
