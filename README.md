@@ -1,8 +1,96 @@
-# 🗡️ RedCalibur - AI-Powered Red Teaming Toolkit
+# RedCalibur 🗡️
 
-> "Forged at the intersection of artificial intelligence and offensive cybersecurity."
+**RedCalibur** is a professional AI-powered red teaming toolkit designed to automate various phases of penetration testing, with a primary focus on OSINT (Open Source Intelligence) reconnaissance.
 
-RedCalibur is a modular red teaming toolkit that leverages machine learning and large language models (LLMs) to supercharge ethical hacking workflows. This project demonstrates the application of **neural networks and AI** in cybersecurity for academic purposes.
+## 🚀 Features
+
+### 🌐 Domain & Infrastructure Analysis
+- **WHOIS Lookup**: Comprehensive domain registration information.
+- **DNS Enumeration**: Discovery of various DNS records.
+- **Subdomain Discovery**: Automated subdomain enumeration.
+- **Port Scanning**: Intelligent port scanning with service detection.
+- **SSL/TLS Analysis**: Certificate details and security assessment.
+
+### 🔍 Threat Intelligence Integration
+- **Shodan**: Discover internet-facing devices and services.
+- **VirusTotal**: Analyze domains and IPs for malicious content.
+
+### 🧠 AI-Enhanced Capabilities
+- **Gemini Integration**: Leverage Google's Gemini for intelligent data analysis and summarization.
+- **Intelligent Summarization**: AI-powered reconnaissance report generation.
+- **Risk Scoring**: Automated vulnerability assessment.
+- **Professional Reporting**: PDF and JSON report generation.
+
+## 📦 Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/PraneeshRV/RedCalibur.git
+    cd RedCalibur
+    ```
+
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+3.  **Install the required dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+## ⚙️ Configuration
+
+1.  **Create a `.env` file** in the root of the project by copying the example file:
+    ```bash
+    cp .env.example .env
+    ```
+
+2.  **Add your API keys** to the `.env` file. At a minimum, you will need keys for Shodan, VirusTotal, and Gemini.
+    ```ini
+    SHODAN_API_KEY="Your_Shodan_API_Key"
+    VIRUSTOTAL_API_KEY="Your_VirusTotal_API_Key"
+    GEMINI_API_KEY="Your_Gemini_API_Key"
+    ```
+
+## 🎯 Usage
+
+The primary entry point for RedCalibur is `main.py`.
+
+### ▶️ Running the Toolkit
+You can run the toolkit using the following command:
+```bash
+python main.py
+```
+This will launch the interactive command interface.
+
+### 🧪 Running Tests
+To ensure all components are working correctly, you can run the test suite.
+
+- **Run all tests:**
+  ```bash
+  pytest
+  ```
+
+- **Run only live integration tests (requires configured API keys):**
+  ```bash
+  pytest -m integration
+  ```
+
+## 🛡️ Security & Ethics
+
+- **Educational Purpose**: This toolkit is designed for security professionals and researchers for educational and authorized testing purposes.
+- **Legal Compliance**: Ensure you have proper authorization before testing any target. Unauthorized use is illegal and unethical.
+
+## 🤝 Contributing
+
+Contributions are welcome. Please refer to `CONTRIBUTING.md` for more details.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
 
 ## Under Development
 
