@@ -14,6 +14,9 @@ from .osint.ai_enhanced.recon_summarizer import summarize_recon_data
 from .osint.ai_enhanced.risk_scoring import calculate_risk_score
 from .osint.ai_enhanced.report_generator import generate_pdf_report, generate_markdown_report
 from .osint.virustotal_integration import scan_url
+from .osint.search_engine_data_mining.google_dorking import perform_google_dorking
+from .osint.image_file_osint.document_metadata_extraction import extract_document_metadata
+from .osint.image_file_osint.exif_metadata_extraction import extract_exif_metadata
 
 class RedCaliburCLI:
     """Professional CLI interface for RedCalibur"""
@@ -84,6 +87,16 @@ Examples:
 
         # Automated Reconnaissance
         subparsers.add_parser('auto-recon', help='Run a fully automated, interactive OSINT process')
+
+        # File-based OSINT
+        file_osint_parser = subparsers.add_parser('file-osint', help='OSINT on local files')
+        file_osint_subparsers = file_osint_parser.add_subparsers(dest='file_command', help='File OSINT commands')
+
+        doc_meta_parser = file_osint_subparsers.add_parser('extract-doc-meta', help='Extract metadata from documents (PDF)')
+        doc_meta_parser.add_argument('--path', required=True, help='Path to the document file')
+
+        exif_parser = file_osint_subparsers.add_parser('extract-exif', help='Extract EXIF data from images')
+        exif_parser.add_argument('--path', required=True, help='Path to the image file')
 
         return parser.parse_args()
     
@@ -294,6 +307,21 @@ Examples:
             "url_scan": self.run_url_scan(argparse.Namespace(url=f"http://{target_domain}"))
         }
 
+        # Add Google Dorking
+        try:
+            self.logger.info(f"Performing Google Dorking for {target_domain}")
+            dork_queries = [
+                f'site:{target_domain} intitle:"index of"',
+                f'site:{target_domain} filetype:pdf',
+                f'site:{target_domain} inurl:login'
+            ]
+            results["google_dorking"] = {}
+            for query in dork_queries:
+                results["google_dorking"][query] = perform_google_dorking(query)
+        except Exception as e:
+            self.logger.error(f"Error during Google Dorking: {str(e)}")
+            results["google_dorking_error"] = str(e)
+
         # Summarize results using Gemini API
         try:
             raw_data = json.dumps(results, indent=2, default=str)
@@ -317,6 +345,23 @@ Examples:
 
         print(json.dumps(results, indent=2, default=str))
     
+    def run_file_osint(self, args):
+        """Run file-based OSINT"""
+        results = {}
+        if args.file_command == 'extract-doc-meta':
+            self.logger.info(f"Extracting metadata from {args.path}")
+            results = extract_document_metadata(args.path)
+        elif args.file_command == 'extract-exif':
+            self.logger.info(f"Extracting EXIF data from {args.path}")
+            results = extract_exif_metadata(args.path)
+
+        output_file = f"{self.config.OUTPUT_DIR}/file_osint_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(output_file, 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+                
+        print(json.dumps(results, indent=2, default=str))
+        self.logger.info(f"Results saved to {output_file}")
+
     def run(self):
         """Main CLI entry point"""
         args = self.parse_arguments()
@@ -351,6 +396,9 @@ Examples:
             return
         elif args.command == 'auto-recon':
             self.run_auto_recon()
+            return
+        elif args.command == 'file-osint':
+            self.run_file_osint(args)
             return
             
         if results:
