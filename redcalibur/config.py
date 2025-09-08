@@ -1,6 +1,10 @@
 import logging
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def setup_logging(log_level="INFO"):
     """
@@ -32,6 +36,7 @@ class Config:
     # API Keys (to be set via environment variables)
     SHODAN_API_KEY = os.getenv("SHODAN_API_KEY")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
     
     # Rate limiting
     REQUEST_DELAY = 1  # seconds between requests
@@ -53,6 +58,12 @@ class Config:
         if not cls.SHODAN_API_KEY:
             issues.append("SHODAN_API_KEY not set")
         
+        if not cls.GEMINI_API_KEY:
+            issues.append("GEMINI_API_KEY not set")
+        
+        if not cls.VIRUSTOTAL_API_KEY:
+            issues.append("VIRUSTOTAL_API_KEY not set")
+
         if not os.path.exists(cls.OUTPUT_DIR):
             os.makedirs(cls.OUTPUT_DIR)
             

@@ -13,6 +13,7 @@ from .osint.user_identity.username_lookup import lookup_username
 from .osint.ai_enhanced.recon_summarizer import summarize_recon_data
 from .osint.ai_enhanced.risk_scoring import calculate_risk_score
 from .osint.ai_enhanced.report_generator import generate_pdf_report
+from .osint.virustotal_integration import scan_url
 
 class RedCaliburCLI:
     """Professional CLI interface for RedCalibur"""
@@ -32,6 +33,7 @@ Examples:
   redcalibur scan --target 192.168.1.1 --ports 80,443,22
   redcalibur username --target johndoe --platforms twitter,linkedin
   redcalibur report --input data.json --format pdf
+  redcalibur urlscan --url http://example.com
             """
         )
         
@@ -68,6 +70,21 @@ Examples:
         config_parser.add_argument('--check', action='store_true', help='Check configuration')
         config_parser.add_argument('--show', action='store_true', help='Show current configuration')
         
+        # All-in-one command
+        all_parser = subparsers.add_parser('all', help='Run all functionalities and generate a summary report')
+        all_parser.add_argument('--target-domain', required=True, help='Target domain for reconnaissance')
+        all_parser.add_argument('--target-ip', required=True, help='Target IP for network scanning')
+        all_parser.add_argument('--username', required=True, help='Target username for lookup')
+        all_parser.add_argument('--platforms', help='Comma-separated platforms for username lookup', default='twitter,linkedin,github,instagram')
+        all_parser.add_argument('--output', help='Output filename (without extension)', default='redcalibur_summary')
+        
+        # URL scanning
+        urlscan_parser = subparsers.add_parser('urlscan', help='Scan a URL using VirusTotal API')
+        urlscan_parser.add_argument('--url', required=True, help='URL to scan')
+
+        # Automated Reconnaissance
+        subparsers.add_parser('auto-recon', help='Run a fully automated, interactive OSINT process')
+
         return parser.parse_args()
     
     def run_domain_recon(self, args):
@@ -201,6 +218,105 @@ Examples:
         
         print(json.dumps(config_info, indent=2))
     
+    def run_all(self, args):
+        """Run all functionalities and generate a summary report"""
+        results = {
+            "domain": self.run_domain_recon(argparse.Namespace(
+                target=args.target_domain, whois=True, dns=True, subdomains=True, ssl=True, all=True
+            )),
+            "network": self.run_network_scan(argparse.Namespace(
+                target=args.target_ip, ports=None, shodan=True
+            )),
+            "username": self.run_username_lookup(argparse.Namespace(
+                target=args.username, platforms=args.platforms.split(',')
+            ))
+        }
+
+        # Summarize results using Gemini API
+        try:
+            raw_data = json.dumps(results, indent=2)
+            self.logger.info("Summarizing results using Gemini API")
+            summary = summarize_recon_data(raw_data[:1000])  # Truncate for summarization
+            results["gemini_summary"] = summary
+        except Exception as e:
+            self.logger.error(f"Error summarizing results with Gemini API: {str(e)}")
+            results["gemini_summary_error"] = str(e)
+
+        # Generate user-friendly report
+        output_name = f"{self.config.OUTPUT_DIR}/{args.output}"
+        try:
+            self.logger.info("Generating user-friendly report")
+            generate_pdf_report(results, f"{output_name}.pdf")
+            with open(f"{output_name}.json", 'w') as f:
+                json.dump(results, f, indent=2, default=str)
+            self.logger.info(f"Report generated: {output_name}")
+        except Exception as e:
+            self.logger.error(f"Error generating report: {str(e)}")
+
+        print(json.dumps(results, indent=2, default=str))
+    
+    def run_url_scan(self, args):
+        """Scan a URL using VirusTotal API"""
+        results = {"url": args.url, "timestamp": datetime.now().isoformat()}
+
+        try:
+            self.logger.info(f"Scanning URL: {args.url}")
+            scan_results = scan_url(self.config.VIRUSTOTAL_API_KEY, args.url)
+            if scan_results:
+                results.update(scan_results)
+            else:
+                results["error"] = "Failed to scan URL"
+        except Exception as e:
+            self.logger.error(f"Error scanning URL: {str(e)}")
+            results["error"] = str(e)
+
+        print(json.dumps(results, indent=2, default=str))
+        return results
+    
+    def get_targets_interactively(self):
+        """Get target information from the user interactively"""
+        print("Starting fully automated OSINT process...")
+        target_domain = input("Enter the target domain (e.g., example.com): ")
+        target_ip = input("Enter the target IP address: ")
+        return target_domain, target_ip
+
+    def run_auto_recon(self):
+        """Run a fully automated, interactive OSINT process"""
+        target_domain, target_ip = self.get_targets_interactively()
+
+        results = {
+            "domain": self.run_domain_recon(argparse.Namespace(
+                target=target_domain, whois=True, dns=True, subdomains=True, ssl=True, all=True
+            )),
+            "network": self.run_network_scan(argparse.Namespace(
+                target=target_ip, ports=None, shodan=True
+            )),
+            "url_scan": self.run_url_scan(argparse.Namespace(url=f"http://{target_domain}"))
+        }
+
+        # Summarize results using Gemini API
+        try:
+            raw_data = json.dumps(results, indent=2)
+            self.logger.info("Summarizing results using Gemini API for a comprehensive report")
+            summary = summarize_recon_data(raw_data)
+            results["gemini_summary"] = summary
+        except Exception as e:
+            self.logger.error(f"Error summarizing results with Gemini API: {str(e)}")
+            results["gemini_summary_error"] = str(e)
+
+        # Generate final report
+        output_name = f"{self.config.OUTPUT_DIR}/automated_recon_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        try:
+            self.logger.info("Generating final reconnaissance report")
+            generate_pdf_report(results, f"{output_name}.pdf")
+            with open(f"{output_name}.json", 'w') as f:
+                json.dump(results, f, indent=2, default=str)
+            self.logger.info(f"Automated reconnaissance report generated: {output_name}")
+        except Exception as e:
+            self.logger.error(f"Error generating report: {str(e)}")
+
+        print(json.dumps(results, indent=2, default=str))
+    
     def run(self):
         """Main CLI entry point"""
         args = self.parse_arguments()
@@ -226,6 +342,15 @@ Examples:
             results = self.run_username_lookup(args)
         elif args.command == 'report':
             self.generate_report(args)
+            return
+        elif args.command == 'all':
+            self.run_all(args)
+            return
+        elif args.command == 'urlscan':
+            results = self.run_url_scan(args)
+            return
+        elif args.command == 'auto-recon':
+            self.run_auto_recon()
             return
             
         if results:

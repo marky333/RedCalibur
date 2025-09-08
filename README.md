@@ -148,6 +148,18 @@ redcalibur username --target johndoe --platforms twitter,linkedin,github
 redcalibur username --target johndoe
 ```
 
+#### URL Scanning
+```bash
+# Scan a URL for malicious activity using VirusTotal
+redcalibur urlscan --url http://example.com
+```
+
+#### All-in-One Command
+```bash
+# Run all functionalities and generate a summary report
+redcalibur all --target-domain example.com --target-ip 192.168.1.1 --username johndoe --platforms twitter,linkedin --output summary_report
+```
+
 #### Report Generation
 ```bash
 # Generate comprehensive reports
