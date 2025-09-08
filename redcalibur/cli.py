@@ -193,7 +193,7 @@ Examples:
         """Show current configuration"""
         config_info = {
             "SHODAN_API_KEY": "Set" if self.config.SHODAN_API_KEY else "Not set",
-            "OPENAI_API_KEY": "Set" if self.config.OPENAI_API_KEY else "Not set",
+            "GEMINI_API_KEY": "Set" if self.config.GEMINI_API_KEY else "Not set",
             "OUTPUT_DIR": self.config.OUTPUT_DIR,
             "REPORT_FORMAT": self.config.REPORT_FORMAT,
             "DEFAULT_PORTS": self.config.DEFAULT_PORTS

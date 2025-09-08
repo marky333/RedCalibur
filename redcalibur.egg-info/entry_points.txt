@@ -1,2 +1,3 @@
 [console_scripts]
+redcalibur = redcalibur.cli:main
 redcalibur-osint = redcalibur.osint.__main__:main

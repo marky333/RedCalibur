@@ -2,6 +2,8 @@ LICENSE
 README.md
 setup.py
 redcalibur/__init__.py
+redcalibur/cli.py
+redcalibur/config.py
 redcalibur.egg-info/PKG-INFO
 redcalibur.egg-info/SOURCES.txt
 redcalibur.egg-info/dependency_links.txt
@@ -11,8 +13,13 @@ redcalibur.egg-info/top_level.txt
 redcalibur/ai_core/__init__.py
 redcalibur/osint/__init__.py
 redcalibur/osint/__main__.py
+redcalibur/osint/shodan_integration.py
 redcalibur/osint/shodan_scan.py
 redcalibur/osint/social_media_scraper.py
+redcalibur/osint/virustotal_integration.py
 redcalibur/osint/whois_lookup.py
 redcalibur/phishing_detection/__init__.py
 redcalibur/reconnaissance/__init__.py
+tests/test_basic_functionality.py
+tests/test_shodan_integration.py
+tests/test_virustotal_integration.py
