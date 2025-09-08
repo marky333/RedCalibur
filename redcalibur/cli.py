@@ -12,7 +12,7 @@ from .osint.network_threat_intel.shodan_integration import perform_shodan_scan
 from .osint.user_identity.username_lookup import lookup_username
 from .osint.ai_enhanced.recon_summarizer import summarize_recon_data
 from .osint.ai_enhanced.risk_scoring import calculate_risk_score
-from .osint.ai_enhanced.report_generator import generate_pdf_report
+from .osint.ai_enhanced.report_generator import generate_pdf_report, generate_markdown_report
 from .osint.virustotal_integration import scan_url
 
 class RedCaliburCLI:
@@ -110,7 +110,7 @@ Examples:
                 
             # AI Enhancement: Summarize results
             if args.all:
-                raw_data = json.dumps(results, indent=2)
+                raw_data = json.dumps(results, indent=2, default=str)
                 summary = summarize_recon_data(raw_data[:1000])  # Truncate for summarization
                 results["ai_summary"] = summary
                 
@@ -296,7 +296,7 @@ Examples:
 
         # Summarize results using Gemini API
         try:
-            raw_data = json.dumps(results, indent=2)
+            raw_data = json.dumps(results, indent=2, default=str)
             self.logger.info("Summarizing results using Gemini API for a comprehensive report")
             summary = summarize_recon_data(raw_data)
             results["gemini_summary"] = summary
@@ -308,10 +308,10 @@ Examples:
         output_name = f"{self.config.OUTPUT_DIR}/automated_recon_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         try:
             self.logger.info("Generating final reconnaissance report")
-            generate_pdf_report(results, f"{output_name}.pdf")
+            generate_markdown_report(results, f"{output_name}.md")
             with open(f"{output_name}.json", 'w') as f:
                 json.dump(results, f, indent=2, default=str)
-            self.logger.info(f"Automated reconnaissance report generated: {output_name}")
+            self.logger.info(f"Automated reconnaissance report generated: {output_name}.md")
         except Exception as e:
             self.logger.error(f"Error generating report: {str(e)}")
 

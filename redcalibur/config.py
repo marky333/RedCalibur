@@ -47,7 +47,11 @@ class Config:
     REPORT_FORMAT = "both"  # pdf, json, or both
     
     # OSINT settings
-    DEFAULT_PORTS = [22, 80, 443, 21, 23, 25, 53, 110, 993, 995]
+    DEFAULT_PORTS = [
+        20, 21, 22, 23, 25, 53, 67, 68, 69, 80, 110, 111, 123, 135, 137, 138, 139, 143, 161, 162, 
+        179, 389, 443, 445, 465, 514, 515, 587, 636, 993, 995, 1080, 1433, 1434, 1521, 1723, 
+        2049, 3306, 3389, 5432, 5900, 5901, 6379, 8000, 8080, 8443, 8888, 9090, 27017
+    ]
     SUBDOMAIN_WORDLIST = ["www", "mail", "ftp", "admin", "test", "dev", "staging", "api"]
     
     @classmethod
