@@ -192,6 +192,12 @@ redcalibur file-osint extract-exif --path /path/to/image.jpg
 redcalibur all --target-domain example.com --target-ip 192.168.1.1 --username johndoe --platforms twitter,linkedin --output summary_report
 ```
 
+#### Automated Reconnaissance
+```bash
+# Fully automated, interactive OSINT process
+redcalibur auto-recon
+```
+
 #### Report Generation
 ```bash
 # Generate comprehensive reports

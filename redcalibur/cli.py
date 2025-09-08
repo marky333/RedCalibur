@@ -37,6 +37,10 @@ Examples:
   redcalibur username --target johndoe --platforms twitter,linkedin
   redcalibur report --input data.json --format pdf
   redcalibur urlscan --url http://example.com
+  redcalibur file-osint extract-doc-meta --path /path/to/document.pdf
+  redcalibur file-osint extract-exif --path /path/to/image.jpg
+  redcalibur all --target-domain example.com --target-ip 192.168.1.1 --username johndoe --platforms twitter,linkedin --output summary_report
+  redcalibur auto-recon
             """
         )
         
