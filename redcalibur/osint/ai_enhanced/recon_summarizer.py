@@ -17,7 +17,7 @@ def summarize_recon_data(raw_data: str) -> str:
             return "Error: GEMINI_API_KEY not found. Please set it in your environment."
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-2.5-flash')
 
         prompt = f"""
         You are an expert cybersecurity analyst tasked with explaining technical findings to a non-technical audience.
