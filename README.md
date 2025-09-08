@@ -23,7 +23,18 @@ RedCalibur integrates traditional red teaming techniques with modern AI, offerin
     * **VirusTotal**: Analyze domains and IPs for known malicious activity.
 * **Search & Data Mining**:
     * **Google Dorking**: Automate advanced search queries to find sensitive information.
-    * **Leak Detection**: Search Pastebin and GitHub for potential data leaks.
+    * **Leak Detection**: Search Pastebin and GitHub for potential data leaks (placeholder).
+    * **Dark Web Mentions**: Search for mentions on the dark web (placeholder).
+
+### 🕵️ Advanced OSINT Capabilities
+* **Image & File OSINT**:
+    * **EXIF Metadata Extraction**: Extract hidden data from images.
+    * **Document Metadata Analysis**: Analyze metadata from PDF documents.
+    * **Reverse Image Search**: Find where an image appears online (placeholder).
+* **Social Media Reconnaissance**:
+    * **Username Footprinting**: Gather information from social media handles (placeholder).
+    * **LinkedIn Scraping**: Scrape company and employee data (placeholder).
+    * **Twitter OSINT**: Analyze user data and activity (placeholder).
 
 ### 🧠 AI-Enhanced Features
 * **AI-Powered Phishing Detection**:
@@ -152,6 +163,15 @@ redcalibur username --target johndoe
 ```bash
 # Scan a URL for malicious activity using VirusTotal
 redcalibur urlscan --url http://example.com
+```
+
+#### File-Based OSINT
+```bash
+# Extract metadata from a PDF document
+redcalibur file-osint extract-doc-meta --path /path/to/document.pdf
+
+# Extract EXIF data from an image
+redcalibur file-osint extract-exif --path /path/to/image.jpg
 ```
 
 #### All-in-One Command
