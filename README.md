@@ -52,17 +52,29 @@ RedCalibur integrates traditional red teaming techniques with modern AI, offerin
 ```
 RedCalibur/
 ├── redcalibur/
-│   ├── ai_core/              # Core AI components
-│   │   └── __init__.py       # Neural nets, transformers, LLM
-│   ├── phishing_detection/   # Phishing AI models
-│   │   └── __init__.py       # URL analysis, feature extraction
-│   ├── reconnaissance/       # AI-powered recon (future)
-│   ├── prompt_injection/     # LLM security testing (future)
-│   └── payload_generation/   # AI payload creation (future)
-├── models/                   # Saved AI models
-├── data/                     # Training datasets
-├── demo.py                   # Main CLI interface
-└── test.py                   # Component testing
+│   ├── ai_core/                  # Core AI and LLM integration
+│   ├── cli.py                    # Main CLI interface
+│   ├── config.py                 # Configuration and environment loading
+│   ├── osint/
+│   │   ├── ai_enhanced/          # AI-powered summarization, risk scoring, reporting
+│   │   ├── domain_infrastructure/ # WHOIS, DNS, subdomains, SSL, tech stack, etc.
+│   │   ├── image_file_osint/     # EXIF, document metadata, reverse image search
+│   │   ├── network_threat_intel/ # Shodan, vuln scan, ASN, passive DNS
+│   │   ├── search_engine_data_mining/ # Google dorking, dark web, leak search
+│   │   ├── social_media_recon/   # Twitter, LinkedIn, Facebook/Instagram OSINT
+│   │   ├── user_identity/        # Username, email, phone, breach lookups
+│   │   └── virustotal_integration.py # VirusTotal API integration
+│   ├── phishing_detection/       # AI phishing detection models
+│   ├── prompt_injection/         # LLM security testing (future)
+│   ├── payload_generation/       # AI payload creation (future)
+│   ├── reconnaissance/           # AI-powered recon (future)
+│   └── reporting/                # (Reserved for future reporting modules)
+├── models/                       # Saved AI models
+├── data/                         # Training datasets
+├── reports/                      # Output reports (PDF, JSON, Markdown)
+├── README.md
+├── requirements.txt
+└── test.py                       # Component testing
 ```
 ---
 
