@@ -202,12 +202,18 @@ Examples:
                 pdf_path = f"{self.config.OUTPUT_DIR}/{output_name}.pdf"
                 generate_pdf_report(data, pdf_path)
                 self.logger.info(f"PDF report generated: {pdf_path}")
-                
+
             if args.format in ['json', 'both']:
                 json_path = f"{self.config.OUTPUT_DIR}/{output_name}.json"
                 with open(json_path, 'w') as f:
                     json.dump(data, f, indent=2, default=str)
                 self.logger.info(f"JSON report generated: {json_path}")
+
+            # Always generate Markdown report
+            from .osint.ai_enhanced.report_generator import generate_markdown_report
+            md_path = f"{self.config.OUTPUT_DIR}/{output_name}.md"
+            generate_markdown_report(data, md_path)
+            self.logger.info(f"Markdown report generated: {md_path}")
                 
         except Exception as e:
             self.logger.error(f"Error generating report: {str(e)}")
@@ -259,14 +265,18 @@ Examples:
             self.logger.error(f"Error summarizing results with Gemini API: {str(e)}")
             results["gemini_summary_error"] = str(e)
 
-        # Generate user-friendly report
+
+        # Generate user-friendly reports (PDF, JSON, and Markdown)
         output_name = f"{self.config.OUTPUT_DIR}/{args.output}"
         try:
             self.logger.info("Generating user-friendly report")
             generate_pdf_report(results, f"{output_name}.pdf")
             with open(f"{output_name}.json", 'w') as f:
                 json.dump(results, f, indent=2, default=str)
-            self.logger.info(f"Report generated: {output_name}")
+            # Always generate Markdown report
+            from .osint.ai_enhanced.report_generator import generate_markdown_report
+            generate_markdown_report(results, f"{output_name}.md")
+            self.logger.info(f"Reports generated: {output_name}.pdf, {output_name}.json, {output_name}.md")
         except Exception as e:
             self.logger.error(f"Error generating report: {str(e)}")
 
