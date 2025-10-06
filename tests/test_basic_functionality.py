@@ -2,8 +2,10 @@ import unittest
 import sys
 import os
 
-# Add the package to the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'redcalibur')))
+# Add project root to path so `import redcalibur` works
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from redcalibur.osint.domain_infrastructure.whois_lookup import perform_whois_lookup, is_valid_domain
 from redcalibur.osint.domain_infrastructure.dns_enumeration import enumerate_dns_records

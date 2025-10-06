@@ -1,5 +1,7 @@
 import requests
 
+DEFAULT_TIMEOUT = 8.0
+
 def scan_url(api_key: str, url: str):
     """
     Scan a URL using the VirusTotal API.
@@ -16,12 +18,13 @@ def scan_url(api_key: str, url: str):
         "url": url
     }
 
-    response = requests.post(vt_url, headers=headers, data=data)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-        return None
+    try:
+        response = requests.post(vt_url, headers=headers, data=data, timeout=DEFAULT_TIMEOUT)
+        if response.status_code == 200:
+            return response.json()
+        return {"error": "virustotal_error", "status": response.status_code, "body": response.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 def get_url_report(api_key: str, url_id: str):
     """
@@ -36,9 +39,10 @@ def get_url_report(api_key: str, url_id: str):
         "x-apikey": api_key
     }
 
-    response = requests.get(vt_url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-        return None
+    try:
+        response = requests.get(vt_url, headers=headers, timeout=DEFAULT_TIMEOUT)
+        if response.status_code == 200:
+            return response.json()
+        return {"error": "virustotal_error", "status": response.status_code, "body": response.text}
+    except Exception as e:
+        return {"error": str(e)}
