@@ -1,4 +1,3 @@
-import google.generativeai as genai
 import os
 
 def summarize_recon_data(raw_data: str) -> str:
@@ -15,6 +14,11 @@ def summarize_recon_data(raw_data: str) -> str:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             return "Error: GEMINI_API_KEY not found. Please set it in your environment."
+
+        try:
+            import google.generativeai as genai  # lazy import
+        except Exception as imp_err:
+            return f"Gemini client not available: {imp_err}"
 
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')

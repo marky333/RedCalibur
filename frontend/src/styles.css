@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-image: radial-gradient(circle at 1px 1px, rgba(244,63,94,0.2) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.card {
+  @apply bg-zinc-900/70 backdrop-blur border border-zinc-800 rounded-xl p-5 shadow-neon;
+}
+
+.btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-redcalibur-600 hover:bg-redcalibur-500 transition-colors shadow-neon;
+}
+
+.input {
+  @apply w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-redcalibur-600;
+}

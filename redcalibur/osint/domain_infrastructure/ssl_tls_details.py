@@ -1,8 +1,9 @@
 import ssl
 import socket
 from datetime import datetime
+import errno
 
-def get_ssl_details(hostname):
+def get_ssl_details(hostname, port: int = 443):
     """
     Retrieve SSL/TLS certificate details for the given hostname.
 
@@ -14,7 +15,7 @@ def get_ssl_details(hostname):
     """
     try:
         context = ssl.create_default_context()
-        with socket.create_connection((hostname, 443)) as sock:
+        with socket.create_connection((hostname, port), timeout=6) as sock:
             with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                 cert = ssock.getpeercert()
                 return {
@@ -26,5 +27,11 @@ def get_ssl_details(hostname):
                     "notAfter": datetime.strptime(cert["notAfter"], "%b %d %H:%M:%S %Y %Z"),
                     "subjectAltName": cert.get("subjectAltName", [])
                 }
+    except socket.gaierror as e:
+        return {"error": f"DNS resolution failed: {e}"}
+    except OSError as e:
+        if e.errno == errno.EAI_AGAIN:
+            return {"error": "Temporary failure in name resolution"}
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}

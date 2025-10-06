@@ -1,5 +1,6 @@
 import socket
 import whois
+import requests
 
 def perform_whois_lookup(domain):
     """
@@ -17,7 +18,15 @@ def perform_whois_lookup(domain):
             return whois_info
         return whois_info.__dict__
     except Exception as e:
-        return {"error": str(e)}
+        # Fallback to RDAP if whois fails
+        try:
+            resp = requests.get(f"https://rdap.org/domain/{domain}", timeout=8)
+            if resp.ok:
+                data = resp.json()
+                return {"rdap": data, "whois_error": str(e)}
+            return {"error": str(e), "rdap_error": resp.text}
+        except Exception as re:
+            return {"error": str(e), "rdap_error": str(re)}
 
 def is_valid_domain(domain):
     """

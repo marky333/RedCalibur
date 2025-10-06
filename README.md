@@ -276,3 +276,40 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **RedCalibur** - *Forging the future of automated red teaming* ⚔️
+ 
+---
+
+## 🌐 Web UI (FastAPI + React)
+
+This repository includes a lightweight API server and a modern React dashboard.
+
+### Backend API
+1) Copy `.env.example` to `.env` and fill your keys.
+2) Install and run:
+
+```bash
+pip install -r requirements.txt
+python -m api.run
+```
+
+API is served at http://localhost:8000 (health: `/health`).
+
+### Frontend
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+App is served at http://localhost:5173 and proxies `/api/*` to the backend.
+
+### UI Highlights
+- Neon-red cyber theme, accessible contrast, responsive layout
+- Domain recon (WHOIS, DNS, subdomains, SSL), AI summary and basic risk score
+- Network scan with optional Shodan enrichment
+- Username lookup (Sherlock)
+- URL malware scan (VirusTotal)
+
+Note: Ensure external tools and keys are configured (Shodan, VirusTotal, Gemini, Sherlock).

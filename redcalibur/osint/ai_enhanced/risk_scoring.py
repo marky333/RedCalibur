@@ -1,6 +1,3 @@
-from sklearn.ensemble import RandomForestClassifier
-import numpy as np
-
 def calculate_risk_score(features):
     """
     Calculate a basic risk score based on input features.
@@ -11,11 +8,19 @@ def calculate_risk_score(features):
     Returns:
         float: A risk score between 0 and 1.
     """
+    # Simple heuristic: scale and clamp between 0 and 1.
+    # features = [subdomain_count, has_valid_ssl (0/1), a_records_count]
     try:
-        # Placeholder model for demonstration
-        model = RandomForestClassifier()
-        model.fit(np.random.rand(10, len(features)), np.random.randint(2, size=10))
-        risk_score = model.predict_proba([features])[0][1]
-        return risk_score
+        subdomains = float(features[0]) if len(features) > 0 else 0.0
+        ssl_ok = float(features[1]) if len(features) > 1 else 0.0
+        a_count = float(features[2]) if len(features) > 2 else 0.0
+
+        # weights tuned for simple prioritization
+        score = (
+            min(subdomains / 50.0, 1.0) * 0.4 +  # many subdomains → larger surface
+            (1.0 - ssl_ok) * 0.4 +               # missing/invalid SSL increases risk
+            min(a_count / 10.0, 1.0) * 0.2       # multiple A records implies complexity
+        )
+        return round(score, 3)
     except Exception as e:
         return f"Error in risk scoring: {str(e)}"
