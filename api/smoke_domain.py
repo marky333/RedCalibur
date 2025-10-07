@@ -1,4 +1,3 @@
-def main():
 import json
 import requests
 
@@ -14,7 +13,6 @@ def main():
             print(r.text)
     except Exception as e:
         print("Request failed:", e)
-
 
 if __name__ == "__main__":
     main()
