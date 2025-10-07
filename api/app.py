@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import os
 
 from redcalibur.config import Config, setup_logging
 from redcalibur.osint.domain_infrastructure.whois_lookup import perform_whois_lookup
@@ -24,12 +25,20 @@ config = Config()
 
 app = FastAPI(title="RedCalibur API", version="0.1.0")
 
-# CORS for dev convenience
+# CORS configuration for production
+allowed_origins = [
+    "https://*.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins if os.getenv("VERCEL") else ["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -57,6 +66,10 @@ class UsernameRequest(BaseModel):
 class URLScanRequest(BaseModel):
     url: str
 
+
+@app.get("/")
+def root() -> Dict[str, Any]:
+    return {"message": "RedCalibur API", "status": "ok", "time": datetime.now().isoformat()}
 
 @app.get("/health")
 def health() -> Dict[str, Any]:

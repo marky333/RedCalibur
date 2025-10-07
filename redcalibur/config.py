@@ -9,23 +9,20 @@ load_dotenv()
 def setup_logging(log_level="INFO"):
     """
     Set up logging configuration for RedCalibur.
+    Serverless-friendly version that only uses console logging.
     
     Args:
         log_level (str): The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    
-    log_filename = f"{log_dir}/redcalibur_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    
+    # For serverless environments, only use console logging
+    # File logging is not supported in serverless functions
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_filename),
             logging.StreamHandler()
-        ]
+        ],
+        force=True  # Override any existing configuration
     )
     
     return logging.getLogger("RedCalibur")
@@ -68,7 +65,13 @@ class Config:
         if not cls.VIRUSTOTAL_API_KEY:
             issues.append("VIRUSTOTAL_API_KEY not set")
 
-        if not os.path.exists(cls.OUTPUT_DIR):
-            os.makedirs(cls.OUTPUT_DIR)
+        # Skip directory creation in serverless environments
+        # as we don't have write access to the filesystem
+        try:
+            if not os.path.exists(cls.OUTPUT_DIR):
+                os.makedirs(cls.OUTPUT_DIR)
+        except (OSError, PermissionError):
+            # Ignore filesystem errors in serverless environments
+            pass
             
         return issues
