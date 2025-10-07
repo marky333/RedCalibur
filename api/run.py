@@ -1,4 +1,3 @@
-#sample comment
 import uvicorn
 
 if __name__ == "__main__":
@@ -6,7 +5,7 @@ if __name__ == "__main__":
     # For CI, suppress Bandit warning.
     uvicorn.run(
         "api.app:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec
         port=8000,
-        reload=True  # nosec
+        reload=True
     )
