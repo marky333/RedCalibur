@@ -1,3 +1,4 @@
+def main():
 import json
 import requests
 
