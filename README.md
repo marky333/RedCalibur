@@ -7,6 +7,59 @@
 This project serves both as a practical cybersecurity tool and as a demonstration of applying neural networks and AI in cybersecurity for academic purposes.
 
 ---
+## 🚀 Quickstart (cloned repo)
+
+Prerequisites
+- Python 3.10+ (3.11/3.12/3.13 supported)
+- Node.js 18+ and npm
+
+1) Clone and enter the folder
+```bash
+git clone https://github.com/PraneeshRV/RedCalibur.git
+cd RedCalibur
+```
+
+2) Create and activate a virtual environment, install deps
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
+python -m pip install -r requirements.txt
+python -m pip install -r api/requirements.txt
+```
+
+3) Configure environment variables (optional but recommended)
+```bash
+cp .env.example .env
+# edit .env and add keys as needed: SHODAN_API_KEY, VIRUSTOTAL_API_KEY, GEMINI_API_KEY
+```
+
+4) Start the backend API (runs in background)
+```bash
+chmod +x scripts/*.sh
+./scripts/start_api.sh
+# Health check: http://127.0.0.1:8000/health
+```
+
+5) Start the frontend (development)
+```bash
+cd frontend
+npm install
+npm run dev
+# App: http://localhost:5173 (Vite may choose 5174 if 5173 is busy)
+```
+
+Stop the backend
+```bash
+./scripts/stop_api.sh
+```
+
+Optional: run tests
+```bash
+python -m pytest tests/
+```
+
+---
 ## ⚔️ Features
 
 RedCalibur integrates traditional red teaming techniques with modern AI, offering a wide array of capabilities.
@@ -32,7 +85,7 @@ RedCalibur integrates traditional red teaming techniques with modern AI, offerin
     * **Document Metadata Analysis**: Analyze metadata from PDF documents.
     * **Reverse Image Search**: Find where an image appears online (placeholder).
 * **Social Media Reconnaissance**:
-    * **Username Footprinting**: Gather information from social media handles (placeholder).
+  * **Username Footprinting**: Multi-platform probes via direct HTTP checks (no external CLI required).
     * **LinkedIn Scraping**: Scrape company and employee data (placeholder).
     * **Twitter OSINT**: Analyze user data and activity (placeholder).
 
@@ -122,16 +175,14 @@ pip install -r requirements.txt
 ## ⚙️ Configuration
 
 ### Environment Variables
-```bash
-# Required for full functionality
-export SHODAN_API_KEY="your_shodan_api_key"
-export OPENAI_API_KEY="your_openai_api_key"
-export ANTHROPIC_API_KEY="your_anthropic_api_key"
+Use `.env` at the project root (copy from `.env.example`). Keys are optional but enable richer results.
 
-# Optional
-export REDCALIBUR_OUTPUT_DIR="./reports"
-export REDCALIBUR_LOG_LEVEL="INFO"
-```
+Core keys used by the current API/UI
+- SHODAN_API_KEY: Enables Shodan enrichment on network scan
+- VIRUSTOTAL_API_KEY: Enables full URL malware scanning; without it, a basic URL health check is used
+- GEMINI_API_KEY: Enables AI summarization of recon data (Google Generative AI)
+
+Additional optional variables in `.env.example` are for future/extended tooling (e.g., Hunter.io, OpenAI/Anthropic); they are not required to run the local UI and core flows.
 
 ### Configuration Check
 ```bash
@@ -284,15 +335,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 This repository includes a lightweight API server and a modern React dashboard.
 
 ### Backend API
-1) Copy `.env.example` to `.env` and fill your keys.
-2) Install and run:
+1) Copy `.env.example` to `.env` and fill keys as needed (optional).
+2) Install deps (see Quickstart above) and run:
 
+Dev (foreground, auto-reload):
 ```bash
-pip install -r requirements.txt
 python -m api.run
 ```
 
-API is served at http://localhost:8000 (health: `/health`).
+Background (recommended local service):
+```bash
+chmod +x scripts/*.sh
+./scripts/start_api.sh
+# Stop with: ./scripts/stop_api.sh
+```
+
+API default: http://127.0.0.1:8000 (health: `/health`).
 
 ### Frontend
 In a second terminal:
@@ -303,13 +361,37 @@ npm install
 npm run dev
 ```
 
-App is served at http://localhost:5173 and proxies `/api/*` to the backend.
+App is served at http://localhost:5173 (or 5174) and proxies `/api/*` to http://127.0.0.1:8000 in development.
 
 ### UI Highlights
 - Neon-red cyber theme, accessible contrast, responsive layout
 - Domain recon (WHOIS, DNS, subdomains, SSL), AI summary and basic risk score
 - Network scan with optional Shodan enrichment
-- Username lookup (Sherlock)
+- Username lookup (direct HTTP probes; no Sherlock dependency)
 - URL malware scan (VirusTotal)
 
-Note: Ensure external tools and keys are configured (Shodan, VirusTotal, Gemini, Sherlock).
+Note: Keys are optional. Shodan and VirusTotal enrich results when provided. Gemini powers AI summaries.
+
+### Optional: systemd service (Linux)
+If you prefer the backend to run automatically on boot:
+
+1) Review and, if needed, edit `deploy/systemd/redcalibur.service` paths.
+2) Install and enable the service:
+```bash
+sudo cp deploy/systemd/redcalibur.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable redcalibur
+sudo systemctl start redcalibur
+```
+3) Check status and logs:
+```bash
+systemctl status redcalibur --no-pager
+journalctl -u redcalibur -n 100 --no-pager
+```
+
+### Troubleshooting
+- Backend health check: http://127.0.0.1:8000/health
+- Frontend can’t reach API in dev: ensure the backend is running and Vite proxy is active
+- Port conflicts: Vite will choose another port (5174) if 5173 is busy; change API port with `--port` in `api/run.py` if needed
+- Scripts say venv missing: create the venv at `.venv` and install requirements (see Quickstart)
+- Missing keys: the app will still run, but some features return reduced data

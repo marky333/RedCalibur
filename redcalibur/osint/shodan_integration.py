@@ -12,10 +12,14 @@ def search_shodan(api_key: str, query: str):
 
     try:
         results = api.search(query)
-        print(f"Results found: {results['total']}")
-        for result in results['matches']:
-            print(f"IP: {result['ip_str']}")
-            print(result['data'])
+        total = results.get('total', 0) if isinstance(results, dict) else 0
+        print(f"Results found: {total}")
+        for result in results.get('matches', []) if isinstance(results, dict) else []:
+            ip = result.get('ip_str', 'unknown')
+            print(f"IP: {ip}")
+            banner = result.get('data')
+            if banner:
+                print(banner)
             print("")
         return results
 
@@ -35,13 +39,13 @@ def get_host_info(api_key: str, ip: str):
 
     try:
         host = api.host(ip)
-        print(f"IP: {host['ip_str']}")
+        print(f"IP: {host.get('ip_str', ip)}")
         print(f"Organization: {host.get('org', 'n/a')}")
         print(f"Operating System: {host.get('os', 'n/a')}")
 
-        for item in host['data']:
-            print(f"Port: {item['port']}")
-            print(f"Banner: {item['data']}")
+        for item in host.get('data', []) if isinstance(host, dict) else []:
+            print(f"Port: {item.get('port', 'n/a')}")
+            print(f"Banner: {item.get('data', '')}")
         return host
 
     except shodan.APIError as e:

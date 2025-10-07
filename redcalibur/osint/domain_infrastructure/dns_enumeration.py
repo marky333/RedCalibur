@@ -4,6 +4,7 @@ DEFAULT_NAMESERVERS = ["1.1.1.1", "8.8.8.8"]
 
 def _resolver(nameservers=None, timeout=5.0):
     r = dns.resolver.Resolver(configure=True)
+    r.timeout = float(timeout)
     r.lifetime = float(timeout)
     if nameservers:
         r.nameservers = nameservers

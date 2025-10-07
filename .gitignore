@@ -104,3 +104,4 @@ Thumbs.db
 *.pkl
 *.joblib
 *.model
+.vercel

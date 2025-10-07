@@ -10,9 +10,12 @@ from redcalibur.osint.domain_infrastructure.dns_enumeration import enumerate_dns
 from redcalibur.osint.domain_infrastructure.subdomain_discovery import discover_subdomains
 from redcalibur.osint.domain_infrastructure.port_scanning import perform_port_scan
 from redcalibur.osint.domain_infrastructure.ssl_tls_details import get_ssl_details
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
+import time
 from redcalibur.osint.network_threat_intel.shodan_integration import perform_shodan_scan
 from redcalibur.osint.user_identity.username_lookup import lookup_username
 from redcalibur.osint.virustotal_integration import scan_url
+from redcalibur.osint.url_health_check import basic_url_health
 from redcalibur.osint.ai_enhanced.recon_summarizer import summarize_recon_data
 from redcalibur.osint.ai_enhanced.risk_scoring import calculate_risk_score
 
@@ -65,44 +68,77 @@ def domain_recon(req: DomainRequest):
     results: Dict[str, Any] = {"target": req.target, "timestamp": datetime.now().isoformat()}
     errors: Dict[str, Any] = {}
 
-    # WHOIS
-    if req.whois or req.all:
-        try:
-            results["whois"] = perform_whois_lookup(req.target)
-        except Exception as e:
-            logger.error(f"WHOIS error: {e}")
-            errors["whois"] = str(e)
+    tasks = []
 
-    # DNS
-    if req.dns or req.all:
+    def wrap(name, fn, *args, **kwargs):
         try:
-            results["dns"] = enumerate_dns_records(req.target)
+            res = fn(*args, **kwargs)
+            results[name] = res
         except Exception as e:
-            logger.error(f"DNS error: {e}")
-            errors["dns"] = str(e)
+            logger.error(f"{name} error: {e}")
+            errors[name] = str(e)
 
-    # Subdomains
-    if req.subdomains or req.all:
-        try:
-            results["subdomains"] = discover_subdomains(req.target, config.SUBDOMAIN_WORDLIST)
-        except Exception as e:
-            logger.error(f"Subdomain discovery error: {e}")
-            errors["subdomains"] = str(e)
+    ex = ThreadPoolExecutor(max_workers=4)
+    try:
+        fut_to_name: Dict[Any, str] = {}
+        if req.whois or req.all:
+            fut = ex.submit(wrap, "whois", perform_whois_lookup, req.target)
+            tasks.append(fut)
+            fut_to_name[fut] = "whois"
+        if req.dns or req.all:
+            fut = ex.submit(wrap, "dns", enumerate_dns_records, req.target)
+            tasks.append(fut)
+            fut_to_name[fut] = "dns"
+        if req.subdomains or req.all:
+            fut = ex.submit(wrap, "subdomains", discover_subdomains, req.target, config.SUBDOMAIN_WORDLIST)
+            tasks.append(fut)
+            fut_to_name[fut] = "subdomains"
+        if req.ssl or req.all:
+            fut = ex.submit(wrap, "ssl", get_ssl_details, req.target)
+            tasks.append(fut)
+            fut_to_name[fut] = "ssl"
 
-    # SSL
-    if req.ssl or req.all:
-        try:
-            results["ssl"] = get_ssl_details(req.target)
-        except Exception as e:
-            logger.error(f"SSL details error: {e}")
-            errors["ssl"] = str(e)
+        deadline = time.time() + 12.0
+        pending = set(tasks)
+        while time.time() < deadline and pending:
+            try:
+                for fut in as_completed(list(pending), timeout=0.5):
+                    try:
+                        fut.result()
+                    except Exception as e:
+                        logger.error(f"Task future error: {e}")
+                    finally:
+                        pending.discard(fut)
+            except TimeoutError:
+                # No futures completed in this slice; loop again until deadline
+                pass
+
+        # Mark any remaining as timed out by task name
+        for fut in list(pending):
+            name = fut_to_name.get(fut, "task")
+            errors[name] = "timeout"
+    finally:
+        # Do not wait for running tasks; return partial results promptly
+        ex.shutdown(wait=False, cancel_futures=True)
 
     # AI enrichment (optional)
     if req.all:
         try:
             import json
             raw_data = json.dumps(results, indent=2, default=str)
-            results["ai_summary"] = summarize_recon_data(raw_data[:2000])
+            # Run summarization with a strict timeout to avoid long external calls
+            ex_ai = ThreadPoolExecutor(max_workers=1)
+            try:
+                fut = ex_ai.submit(summarize_recon_data, raw_data[:2000])
+                try:
+                    results["ai_summary"] = fut.result(timeout=6.0)
+                except TimeoutError:
+                    errors["ai"] = "timeout"
+            finally:
+                # Don't wait for the AI call to finish if it's slow
+                ex_ai.shutdown(wait=False, cancel_futures=True)
+
+            # Risk scoring is local and fast
             features = [
                 len(results.get("subdomains", [])),
                 1 if isinstance(results.get("ssl", {}), dict) and "error" not in results.get("ssl", {}) else 0,
@@ -152,17 +188,23 @@ def username(req: UsernameRequest):
 @app.post("/urlscan")
 def urlscan(req: URLScanRequest):
     try:
-        if not config.VIRUSTOTAL_API_KEY:
-            raise HTTPException(status_code=400, detail="VIRUSTOTAL_API_KEY not configured")
-        data = scan_url(config.VIRUSTOTAL_API_KEY, req.url)
-        if not data:
-            raise HTTPException(status_code=502, detail="VirusTotal returned no data")
-        return data
-    except HTTPException:
-        raise
+        # Run the scan in a short-lived thread with a strict timeout
+        def runner():
+            if not config.VIRUSTOTAL_API_KEY:
+                return {"note": "VIRUSTOTAL_API_KEY not configured", "health": basic_url_health(req.url)}
+            return scan_url(config.VIRUSTOTAL_API_KEY, req.url) or {"error": "no_data"}
+
+        with ThreadPoolExecutor(max_workers=1) as ex_url:
+            fut = ex_url.submit(runner)
+            try:
+                return fut.result(timeout=10.0)
+            except TimeoutError:
+                return {"error": "timeout"}
+            finally:
+                ex_url.shutdown(wait=False, cancel_futures=True)
     except Exception as e:
         logger.error(f"URL scan failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
 
 
 class SummarizeRequest(BaseModel):

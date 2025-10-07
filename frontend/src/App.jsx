@@ -1,33 +1,64 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import VisualFX from './components/FX'
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 const Section = ({ title, children }) => (
   <div className="card">
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-xl font-semibold text-redcalibur-300">{title}</h2>
+      <h2 className="text-xl font-semibold accent-text">{title}</h2>
     </div>
     {children}
   </div>
 )
 
-const Header = ({ apiStatus }) => (
-  <header className="sticky top-0 z-10 backdrop-blur bg-black/60 border-b border-zinc-800">
-    <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L4 6v5c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z" fill="#e11d48"/>
-        <path d="M12 6v12M9 10h6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-      <div className="flex items-center gap-3">
-        <div className="text-2xl font-bold tracking-tight">RedCalibur</div>
-        <div className="text-sm text-zinc-400 -mt-1">Red Teaming AI — Recon, Scan, Report</div>
-        <span className="ml-2 inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full border border-zinc-700 bg-zinc-900/70">
-          <span className={`inline-block w-2.5 h-2.5 rounded-full ${apiStatus === 'ok' ? 'bg-green-500' : apiStatus === 'down' ? 'bg-redcalibur-500' : 'bg-zinc-500'}`}></span>
-          API
-        </span>
+const Header = ({ palette, setPalette, fx, setFx, apiStatus }) => {
+  const [openFx, setOpenFx] = useState(false)
+  return (
+    <header className="sticky top-0 z-20 backdrop-blur bg-black/60 border-b border-zinc-800">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L4 6v5c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z" fill="rgba(var(--primary-rgb),1)"/>
+          <path d="M12 6v12M9 10h6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <div className="flex-1 min-w-0">
+          <div className="text-2xl font-bold tracking-tight">RedCalibur</div>
+          <div className="text-sm text-zinc-400 -mt-1">Red Teaming AI — Recon, Scan, Report</div>
+        </div>
+        <div className="relative flex items-center gap-3">
+          <div className="text-xs px-2 py-1 rounded border border-zinc-700/60 bg-black/40">
+            API: <span className={apiStatus==='ok' ? 'text-green-400' : 'text-red-400'}>{apiStatus}</span>
+          </div>
+          <select aria-label="Theme" className="input w-auto" value={palette} onChange={e=>setPalette(e.target.value)}>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+          </select>
+          <div className="relative">
+            <button className="btn" onClick={()=>setOpenFx(v=>!v)} aria-expanded={openFx} aria-haspopup="menu" title="Toggle Effects">FX</button>
+            {openFx && (
+              <div className="absolute right-0 mt-2 w-72 card z-30">
+                <div className="text-sm text-zinc-400 mb-2">Effects</div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {Object.keys(fx).map(key => (
+                    <label key={key} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={fx[key]} onChange={()=>setFx(prev=>({ ...prev, [key]: !prev[key] }))} />
+                      <span className="capitalize">{key.replace(/([A-Z])/g,' $1').trim()}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <button className="btn" onClick={()=>{ setPalette('red'); setFx({ matrix:true,constellation:true,ripple:true,mouseTrail:true,noise:true,scanlines:true,sweep:true,vignette:true,parallax:true }) }}>Reset Defaults</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  </header>
-)
+    </header>
+  )
+}
 
 export default function App() {
   const [loading, setLoading] = useState(false)
@@ -35,115 +66,128 @@ export default function App() {
   const [logs, setLogs] = useState([])
   const [apiStatus, setApiStatus] = useState('unknown')
 
-  const api = useMemo(() => ({
-    post: async (path, body, { updateResult = true } = {}) => {
+  const defaultFx = { matrix:true,constellation:true,ripple:true,mouseTrail:true,noise:true,scanlines:true,sweep:true,vignette:true,parallax:true }
+  const [palette, setPalette] = useState(() => (typeof window==='undefined' ? 'red' : (localStorage.getItem('rc_palette')||'red')))
+  const [fx, setFx] = useState(() => {
+    if (typeof window==='undefined') return defaultFx
+    try {
+      const saved = JSON.parse(localStorage.getItem('rc_fx')||'null')
+      return saved && typeof saved==='object' ? { ...defaultFx, ...saved } : defaultFx
+    } catch { return defaultFx }
+  })
+  const [showSummary, setShowSummary] = useState(false)
+  const [summaryText, setSummaryText] = useState('')
+  const [summaryLoading, setSummaryLoading] = useState(false)
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (palette==='blue') {
+      root.style.setProperty('--primary-rgb','59,130,246')
+      root.style.setProperty('--secondary-rgb','244,63,94')
+    } else {
+      root.style.setProperty('--primary-rgb','244,63,94')
+      root.style.setProperty('--secondary-rgb','59,130,246')
+    }
+    try { localStorage.setItem('rc_palette', palette) } catch {}
+  }, [palette])
+
+  useEffect(() => { try { localStorage.setItem('rc_fx', JSON.stringify(fx)) } catch {} }, [fx])
+
+  const api = useMemo(()=>({
+    post: async (path, body, {updateResult=true}={}) => {
       setLoading(true)
       const start = performance.now()
       try {
-        const res = await fetch(`${API_BASE}${path}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        })
-        const json = await res.json()
-        if (!res.ok) throw new Error(json?.detail || 'Request failed')
+        const res = await fetch(`${API_BASE}${path}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+        const json = await res.json(); if (!res.ok) throw new Error(json?.detail||'Request failed')
         if (updateResult) setResult(json)
-        setLogs(l => [{ time: new Date().toLocaleTimeString(), path, ok: true, ms: Math.round(performance.now() - start) }, ...l])
+        setLogs(l=>[{ time:new Date().toLocaleTimeString(), path, ok:true, ms:Math.round(performance.now()-start) }, ...l])
         return json
-      } catch (e) {
-        setLogs(l => [{ time: new Date().toLocaleTimeString(), path, ok: false, error: e.message }, ...l])
+      } catch(e) {
+        setLogs(l=>[{ time:new Date().toLocaleTimeString(), path, ok:false, error:e.message }, ...l])
         throw e
-      } finally {
-        setLoading(false)
-      }
+      } finally { setLoading(false) }
     }
   }), [])
 
-  // API health probe
-  useEffect(() => {
-    let mounted = true
-    const ping = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/health`)
-        if (!mounted) return
-        setApiStatus(res.ok ? 'ok' : 'down')
-      } catch {
-        if (!mounted) return
-        setApiStatus('down')
-      }
-    }
-    ping()
-    const id = setInterval(ping, 10000)
-    return () => { mounted = false; clearInterval(id) }
-  }, [])
+  useEffect(()=>{
+    let mounted=true
+    const ping=async()=>{ try{ const res=await fetch(`${API_BASE}/health`); if(!mounted) return; setApiStatus(res.ok?'ok':'down') } catch { if(!mounted) return; setApiStatus('down') } }
+    ping(); const id=setInterval(ping,10000); return ()=>{mounted=false; clearInterval(id)}
+  },[])
 
   return (
     <div>
-      <Header apiStatus={apiStatus} />
-      <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <VisualFX palette={palette} flags={fx} />
+      <Header palette={palette} setPalette={setPalette} fx={fx} setFx={setFx} apiStatus={apiStatus} />
+      <main className="relative z-10 max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <Section title="Domain Reconnaissance">
-            <DomainForm onSubmit={(data) => api.post('/domain', data)} loading={loading} />
-          </Section>
-          <Section title="Network Scan">
-            <ScanForm onSubmit={(data) => api.post('/scan', data)} loading={loading} />
-          </Section>
-          <Section title="Username Lookup">
-            <UsernameForm onSubmit={(data) => api.post('/username', data)} loading={loading} />
-          </Section>
-          <Section title="URL Malware Scan (VirusTotal)">
-            <URLScanForm onSubmit={(data) => api.post('/urlscan', data)} loading={loading} />
-          </Section>
+          <Section title="Domain Reconnaissance"><DomainForm onSubmit={(data)=>api.post('/domain', data)} loading={loading} /></Section>
+          <Section title="Network Scan"><ScanForm onSubmit={(data)=>api.post('/scan', data)} loading={loading} /></Section>
+          <Section title="Username Lookup"><UsernameForm onSubmit={(data)=>api.post('/username', data)} loading={loading} /></Section>
+          <Section title="URL Malware Scan (VirusTotal)"><URLScanForm onSubmit={(data)=>api.post('/urlscan', data)} loading={loading} /></Section>
         </div>
-
         <div className="space-y-6">
           <Section title="Results">
             {result ? <ResultViewer data={result} /> : <Placeholder />}
             {result && (
               <div className="mt-4">
-                <button className="btn" onClick={async () => {
-                  await api.post('/summarize', { payload: result }, { updateResult: false })
-                    .then((r) => setResult(prev => ({ ...prev, ai_summary: r?.summary })))
-                    .catch(() => {})
-                }}>AI Summarize</button>
+                <button className="btn" onClick={async()=>{ setShowSummary(true); setSummaryLoading(true); setSummaryText(''); try{ const r=await api.post('/summarize',{payload:result},{updateResult:false}); setSummaryText(r?.summary||'No summary returned') } catch(e){ setSummaryText(`Error: ${e?.message||'Failed to summarize'}`) } finally { setSummaryLoading(false) } }}>AI Summarize</button>
               </div>
             )}
           </Section>
-          <Section title="Activity Log">
-            <Logs logs={logs} />
-          </Section>
+          <Section title="Activity Log"><Logs logs={logs} /></Section>
         </div>
       </main>
+      {showSummary && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={()=>setShowSummary(false)} />
+          <div className="relative z-10 w-full max-w-2xl mx-auto card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold accent-text">AI Summary</h3>
+              <div className="flex items-center gap-2">
+                <button className="btn" onClick={()=>{ if(!summaryText) return; navigator.clipboard?.writeText(summaryText) }}>Copy</button>
+                <button className="btn" onClick={()=>setShowSummary(false)}>Close</button>
+              </div>
+            </div>
+            <div className="bg-black/40 border border-zinc-800 rounded-lg p-4 max-h-[60vh] overflow-auto text-sm">
+              {summaryLoading ? 'Summarizing…' : (summaryText ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                  h1:({node,...props})=> <h1 className="text-xl font-bold mb-2" {...props} />,
+                  h2:({node,...props})=> <h2 className="text-lg font-semibold mt-3 mb-1" {...props} />,
+                  h3:({node,...props})=> <h3 className="text-base font-semibold mt-3 mb-1" {...props} />,
+                  p: ({node,...props})=> <p className="mb-2 leading-relaxed" {...props} />,
+                  ul:({node,...props})=> <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
+                  ol:({node,...props})=> <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
+                  code:({inline,...props})=> inline? <code className="px-1 py-0.5 rounded bg-zinc-800/70" {...props} /> : <code className="block p-2 rounded bg-zinc-900/70 overflow-auto" {...props} />,
+                  blockquote:({node,...props})=> <blockquote className="border-l-2 border-zinc-700 pl-3 text-zinc-300 italic" {...props} />,
+                  a:({node,...props})=> <a className="text-blue-400 underline" target="_blank" rel="noreferrer" {...props} />
+                }}>{summaryText}</ReactMarkdown>
+              ) : 'No content')}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 function Field({ label, children }) {
   return (
-    <label className="block mb-3">
-      <div className="text-sm text-zinc-300 mb-1">{label}</div>
+    <div className="mb-4">
+      <div className="text-xs uppercase tracking-wide text-zinc-400 mb-1">{label}</div>
       {children}
-    </label>
+    </div>
   )
 }
 
 function DomainForm({ onSubmit, loading }) {
-  const [target, setTarget] = useState('example.com')
-  const [flags, setFlags] = useState({ whois: true, dns: true, subdomains: false, ssl: true, all: false })
-
+  const [domain, setDomain] = useState('example.com')
   return (
-    <form onSubmit={async (e) => { e.preventDefault(); await onSubmit({ target, ...flags }) }}>
+    <form onSubmit={async (e)=>{e.preventDefault(); await onSubmit({ target: domain, all: true })}}>
       <Field label="Domain">
-        <input className="input" placeholder="example.com" value={target} onChange={e=>setTarget(e.target.value)} />
+        <input className="input" value={domain} onChange={e=>setDomain(e.target.value)} />
       </Field>
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {['whois','dns','subdomains','ssl','all'].map(k => (
-          <label key={k} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={flags[k]} onChange={()=>setFlags(f=>({ ...f, [k]: !f[k] }))} />
-            <span className="capitalize">{k}</span>
-          </label>
-        ))}
-      </div>
       <button className="btn" disabled={loading}>{loading ? 'Running…' : 'Run Recon'}</button>
     </form>
   )
@@ -212,7 +256,7 @@ function Logs({ logs }) {
     <ul className="space-y-2 text-sm">
       {logs.map((l, i) => (
         <li key={i} className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 rounded-md px-3 py-2">
-          <span className={l.ok ? 'text-green-400' : 'text-redcalibur-400'}>
+          <span className={l.ok ? 'text-green-400' : ''} style={!l.ok ? { color: 'rgba(var(--primary-rgb), 0.9)' } : undefined}>
             {l.ok ? 'OK' : 'ERR'} <span className="text-zinc-400">{l.path}</span>
           </span>
           <span className="text-zinc-500">{l.ms ? `${l.ms}ms` : ''} — {l.time}</span>
@@ -229,3 +273,4 @@ function Placeholder() {
     </div>
   )
 }
+

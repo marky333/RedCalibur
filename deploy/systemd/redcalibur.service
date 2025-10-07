@@ -1,0 +1,18 @@
+[Unit]
+Description=RedCalibur FastAPI Service
+After=network.target
+
+[Service]
+User=akvnn
+Group=akvnn
+WorkingDirectory=/home/akvnn/Downloads/aa/RedCalibur
+Environment=PYTHONUNBUFFERED=1
+# Optional: if you want to load .env via systemd rather than python-dotenv
+#EnvironmentFile=/home/akvnn/Downloads/aa/RedCalibur/.env
+ExecStart=/home/akvnn/Downloads/aa/RedCalibur/.venv/bin/python -m uvicorn api.app:app --host 0.0.0.0 --port 8000 --workers 2
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target
