@@ -50,7 +50,7 @@ jobs:
     - name: Run security checks
       run: |
         bandit -r api/
-        safety check
+          safety scan
 
   lint:
     runs-on: ubuntu-latest
